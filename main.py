@@ -86,6 +86,7 @@ def read(data_dir):
                     cv2.waitKey()
                     print("weszlo")
                     print(ilosc)
+                    #probaPROBBBABAAAAA
 
 
                     if ilosc == 0:
