@@ -5,6 +5,20 @@ import re
 import numpy as np
 import cv2
 import math
+from matplotlib import pyplot as plt
+
+photos = []
+
+class BBox:
+    def __init__(self, punkt, boxy_class, wysokosc_class, szerokosc_class, przekatna_class, histogramy_class, nazwa, liczba_BB ):
+        self.punkt = list(punkt)           #lista z punktami do bounding box
+        self.boxy_class = list(boxy_class)              #lista z bounding boxami wycietymi
+        self.wysokosc_class = list(wysokosc_class)      #lista z wysokosciami bb
+        self.szerokosc_class = list(szerokosc_class)    #lista z szerokosciami bb
+        self.przekatna_class = list(przekatna_class)    #lista z przekatnymi bb
+        self.histogramy_class = list(histogramy_class)  #lista z histogramami
+        self.nazwa = nazwa                  #nazwa zdjecia
+        self.liczba_BB = liczba_BB          #liczba bb na jednym zdjęciu
 
 
 def preparation(search, r):
@@ -41,6 +55,11 @@ def read(data_dir):
     current_photo_flag = True
     ilosc = 0
     punkty = []
+    boxy = []
+    wysokosc = []
+    szerokosc = []
+    przekatna = []
+    histogramy = []
 
 
     nazwa_zdj = None
@@ -59,7 +78,11 @@ def read(data_dir):
                 nazwa_zdj = str(data_dir) + '/frames/' + str(pp)
                 img = cv2.imread(nazwa_zdj)
                 punkty.clear()
-                # histogramy.clear()
+                boxy.clear()
+                wysokosc.clear()
+                szerokosc.clear()
+                przekatna.clear()
+                histogramy.clear()
                 # odleglosci.clear()
                 print("weszlo")
         else:
@@ -80,8 +103,13 @@ def read(data_dir):
                     h = float(dane[3])  #y2 = (y+h)
 
                     ilosc-=1
+
                     #wycinanie boundingboxa z osobą
                     wycinek = img[int(y):int(y + h), int(x):int(x + w)]
+
+                    #wpisanie wyciętego BB do klasy
+                    boxy.append(wycinek)
+
                     cv2.imshow("wycinek", wycinek)
                     cv2.waitKey()
                     print("weszlo")
@@ -96,24 +124,34 @@ def read(data_dir):
                     Powyższy prostokąt jest przykładem jak reprezentowane są współrzędne do obliczenia długości Euklidesowej.
 
                     """
-                    w_przekatna = math.sqrt(pow((x - x - w), 2) + pow((y - h - y),
-                                                                      2))  # odległość euklidesowa, odejmowanie x od x specjalnie, nie zostało zoptymalizowane, żeby było jak powstał wzór
-                    w_dlugosc = math.sqrt(pow((x - x - w), 2))
+                    w_przekatna = math.sqrt(pow((x - x - w), 2) + pow((y - h - y),2))  # odległość euklidesowa, odejmowanie x od x specjalnie, nie zostało zoptymalizowane, żeby było jak powstał wzór
+                    w_szerokosc = math.sqrt(pow((x - x - w), 2))
                     w_wysokos = math.sqrt(pow((y - h - y), 2))
 
+                    #wpisanie wymiarów do klas
+                    przekatna.append(w_przekatna)
+                    szerokosc.append(w_szerokosc)
+                    wysokosc.append(w_wysokos)
+
                     print(w_przekatna)
-                    print(w_dlugosc)
+                    print(w_szerokosc)
                     print(w_wysokos)
 
-                    # histogram do wycinku
+                    #histogram do wycinku
                     histg = cv2.calcHist([wycinek], [0], None, [256], [0, 256])
-                    #probaPROBBBABAAAAA
+                    histogramy.append(histg)
+
+                    # plt.plot(histg)
+                    # plt.xlim([0, 256])
+                    # plt.show()
+                    # cv2.waitKey()
+
 
 
                     if ilosc == 0:
                         current_photo_flag = True
-
-
+                        do_klasy = BBox(punkty, boxy, wysokosc, szerokosc, przekatna, histogramy, nazwa_zdj, liczba_bb_zdj)
+                        photos.append(do_klasy)
 
 
 
