@@ -86,6 +86,27 @@ def read(data_dir):
                     cv2.waitKey()
                     print("weszlo")
                     print(ilosc)
+                    """
+                    W programie będą użyte takie wartości jak długość, wysokość i przekątna boundingboxa. 
+                    W tym celu wykorzystałam taki układ:
+                            (x;y)...........((x+w);(y))
+                              :                   :
+                              :                   :
+                          ((x);(y+h)).......((x+w);(y+h))
+                    Powyższy prostokąt jest przykładem jak reprezentowane są współrzędne do obliczenia długości Euklidesowej.
+
+                    """
+                    w_przekatna = math.sqrt(pow((x - x - w), 2) + pow((y - h - y),
+                                                                      2))  # odległość euklidesowa, odejmowanie x od x specjalnie, nie zostało zoptymalizowane, żeby było jak powstał wzór
+                    w_dlugosc = math.sqrt(pow((x - x - w), 2))
+                    w_wysokos = math.sqrt(pow((y - h - y), 2))
+
+                    print(w_przekatna)
+                    print(w_dlugosc)
+                    print(w_wysokos)
+
+                    # histogram do wycinku
+                    histg = cv2.calcHist([wycinek], [0], None, [256], [0, 256])
                     #probaPROBBBABAAAAA
 
 
