@@ -7,7 +7,7 @@ import cv2
 import math
 from matplotlib import pyplot as plt
 # żródło : https://stackoverflow.com/questions/11541154/checking-images-for-similarity-with-opencv
-
+#Pamietaj: dodaj linijki w ktorych to jest
 photos = []
 
 class BBox:
@@ -135,9 +135,9 @@ def read(data_dir):
                     print(w_szerokosc)
                     print(w_wysokos)
 
-                    #histogram do wycinku
-                    histg = cv2.calcHist([wycinek], [0], None, [256], [0, 256])
-                    histogramy.append(histg)
+                    # #histogram do wycinku
+                    # histg = cv2.calcHist([wycinek], [0], None, [256], [0, 256])
+                    # histogramy.append(histg)
 
                     # plt.plot(histg)
                     # plt.xlim([0, 256])
@@ -153,7 +153,7 @@ def read(data_dir):
 
 
 #Funkcja porównująca histogramy
-def porow_histogram(bb_zdj_1:BBox, bb_zdj_2:BBox):
+def porow_histogram(bb_zdj_1, bb_zdj_2):
     zdj_1 = bb_zdj_1.img
     zdj_2 = bb_zdj_2.img
     zdj_1_his = cv2.calcHist([zdj_1], [0], None, [256], [0, 256])
@@ -163,7 +163,20 @@ def porow_histogram(bb_zdj_1:BBox, bb_zdj_2:BBox):
     wynik_his = 1 - prawdopo_zgodnosci
     wynik_his_10 = (porownaj/10)+wynik_his # wykorzystanie 10% z porówania his, ponieważ jest mniej dokładne od metody "wzornikowej"
 
+    # print("to czego szuka" )
+    # print(1-wynik_his_10)
     return 1-wynik_his_10
+#porownaj wymiary
+# def porownaj_wymiary(bb_zdj_1:BBox, bb_zdj_2:BBox):
+#     zdj_1 = bb_zdj_1.img
+#     zdj_2 = bb_zdj_2.img
+
+
+def prawdopodienstwo():
+    flaga = True
+
+    #pętla do przejścia przez wszytkie zdjęcia wraz z ich nr id zdjecia
+    for id, bb in enumerate(photos[1:]):
 
 
 
