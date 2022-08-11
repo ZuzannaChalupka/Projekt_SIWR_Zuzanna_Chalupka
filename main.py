@@ -6,20 +6,20 @@ import numpy as np
 import cv2
 import math
 from matplotlib import pyplot as plt
+# żródło : https://stackoverflow.com/questions/11541154/checking-images-for-similarity-with-opencv
 
 photos = []
 
 class BBox:
     def __init__(self, punkt, boxy_class, wysokosc_class, szerokosc_class, przekatna_class, histogramy_class, nazwa, liczba_BB ):
-        self.punkt = list(punkt)           #lista z punktami do bounding box
+        self.punkt = list(punkt)                        #lista z punktami do bounding box
         self.boxy_class = list(boxy_class)              #lista z bounding boxami wycietymi
         self.wysokosc_class = list(wysokosc_class)      #lista z wysokosciami bb
         self.szerokosc_class = list(szerokosc_class)    #lista z szerokosciami bb
         self.przekatna_class = list(przekatna_class)    #lista z przekatnymi bb
         self.histogramy_class = list(histogramy_class)  #lista z histogramami
-        self.nazwa = nazwa                  #nazwa zdjecia
-        self.liczba_BB = liczba_BB          #liczba bb na jednym zdjęciu
-
+        self.nazwa = nazwa                              #nazwa zdjecia
+        self.liczba_BB = liczba_BB                      #liczba bb na jednym zdjęciu
 
 def preparation(search, r):
     name = search
@@ -50,7 +50,7 @@ def read(data_dir):
         zmianna_pomocnicza = line[:1]
         break
 
-    #zmienne potrzebne do wzoru:
+    #zmienne potrzebne do wzoru, opisane w większości przy definiowaniu klasy:
     name_img_cur = '^' + str(zmianna_pomocnicza)
     current_photo_flag = True
     ilosc = 0
@@ -61,18 +61,16 @@ def read(data_dir):
     przekatna = []
     histogramy = []
 
-
     nazwa_zdj = None
     liczba_bb_zdj = None
 
 
 
-    #lista przechowująca dane dotyczące jednego zdjęcia
-
     for line in lines:
         if current_photo_flag:
             result = re.match(name_img_cur, line)
             if result:
+                #czyszczenie zmiennych przed wpisaniem do nowego zdjęcia
                 current_photo_flag = False
                 pp = line[:-1]
                 nazwa_zdj = str(data_dir) + '/frames/' + str(pp)
@@ -152,6 +150,26 @@ def read(data_dir):
                         current_photo_flag = True
                         do_klasy = BBox(punkty, boxy, wysokosc, szerokosc, przekatna, histogramy, nazwa_zdj, liczba_bb_zdj)
                         photos.append(do_klasy)
+
+
+#Funkcja porównująca histogramy
+def porow_histogram(bb_zdj_1:BBox, bb_zdj_2:BBox):
+    zdj_1 = bb_zdj_1.img
+    zdj_2 = bb_zdj_2.img
+    zdj_1_his = cv2.calcHist([zdj_1], [0], None, [256], [0, 256])
+    zdj_2_his = cv2.calcHist([zdj_2], [0], None, [256], [0, 256])
+    porownaj = cv2.compareHist(zdj_1_his, zdj_2_his, cv2.HISTCMP_BHATTACHARYYA)
+    prawdopo_zgodnosci = cv2.matchTemplate(zdj_1_his, zdj_2_his, cv2.TM_CCOEFF_NORMED)[0][0]
+    wynik_his = 1 - prawdopo_zgodnosci
+    wynik_his_10 = (porownaj/10)+wynik_his # wykorzystanie 10% z porówania his, ponieważ jest mniej dokładne od metody "wzornikowej"
+
+    return 1-wynik_his_10
+
+
+
+
+
+
 
 
 
