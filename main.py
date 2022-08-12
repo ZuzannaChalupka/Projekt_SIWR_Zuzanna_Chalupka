@@ -5,8 +5,9 @@ import re
 import numpy as np
 import cv2
 import math
+from pgmpy.models import FactorGraph
 from matplotlib import pyplot as plt
-# żródło : https://stackoverflow.com/questions/11541154/checking-images-for-similarity-with-opencv
+
 #Pamietaj: dodaj linijki w ktorych to jest
 photos = []
 
@@ -153,30 +154,49 @@ def read(data_dir):
 
 
 #Funkcja porównująca histogramy
-def porow_histogram(bb_zdj_1, bb_zdj_2):
-    zdj_1 = bb_zdj_1.img
-    zdj_2 = bb_zdj_2.img
-    zdj_1_his = cv2.calcHist([zdj_1], [0], None, [256], [0, 256])
-    zdj_2_his = cv2.calcHist([zdj_2], [0], None, [256], [0, 256])
-    porownaj = cv2.compareHist(zdj_1_his, zdj_2_his, cv2.HISTCMP_BHATTACHARYYA)
-    prawdopo_zgodnosci = cv2.matchTemplate(zdj_1_his, zdj_2_his, cv2.TM_CCOEFF_NORMED)[0][0]
+#na podstawie: https://stackoverflow.com/questions/11541154/checking-images-for-similarity-with-opencv
+#
+def porow_histogram(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
+
+    porownaj = cv2.compareHist(photos[zdj_1].histogramy_class[bb_zdj_1], photos[zdj_2].histogramy_class[bb_zdj_2],
+                                cv2.HISTCMP_BHATTACHARYYA)
+    prawdopo_zgodnosci = cv2.matchTemplate(photos[zdj_1].hist[bb_zdj_1], photos[zdj_2].hist[bb_zdj_2],
+                                               cv2.TM_CCOEFF_NORMED)[0][0]
     wynik_his = 1 - prawdopo_zgodnosci
-    wynik_his_10 = (porownaj/10)+wynik_his # wykorzystanie 10% z porówania his, ponieważ jest mniej dokładne od metody "wzornikowej"
+    wynik_his_10 = (porownaj / 10) + wynik_his  # wykorzystanie 10% z porówania his, ponieważ jest mniej dokładne od metody "wzornikowej"
 
     # print("to czego szuka" )
     # print(1-wynik_his_10)
-    return 1-wynik_his_10
+    return 1 - wynik_his_10
 #porownaj wymiary
+#tutaj dodaj
 # def porownaj_wymiary(bb_zdj_1:BBox, bb_zdj_2:BBox):
 #     zdj_1 = bb_zdj_1.img
 #     zdj_2 = bb_zdj_2.img
 
 
-def prawdopodienstwo():
-    flaga = True
+# def prawdopodienstwo():
+#     flaga = True
+#
+#     #pętla do przejścia przez wszytkie zdjęcia wraz z ich nr id zdjecia
+#     for bb in enumerate(photos[1:]):
+#         Graf = FactorGraph()
+#         for box in range(bb.liczba_BB):
+#             nazwa_zdj = bb.nazwa + '_' + str(box)
+#
+#             #pętla po bb z poprzedniego zjęcia
+#             for bb_minus_1 in range(photos[bb].liczba_BB):
+#                 prawdop_po_his = porow_histogram(bb_minus_1, box)
 
-    #pętla do przejścia przez wszytkie zdjęcia wraz z ich nr id zdjecia
-    for id, bb in enumerate(photos[1:]):
+
+
+
+
+
+
+
+
+
 
 
 
