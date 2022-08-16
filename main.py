@@ -160,7 +160,7 @@ def porow_histogram(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
 
     porownaj = cv2.compareHist(photos[zdj_1].histogramy_class[bb_zdj_1], photos[zdj_2].histogramy_class[bb_zdj_2],
                                 cv2.HISTCMP_BHATTACHARYYA)
-    prawdopo_zgodnosci = cv2.matchTemplate(photos[zdj_1].hist[bb_zdj_1], photos[zdj_2].hist[bb_zdj_2],
+    prawdopo_zgodnosci = cv2.matchTemplate(photos[zdj_1].histogramy_class[bb_zdj_1], photos[zdj_2].histogramy_class[bb_zdj_2],
                                                cv2.TM_CCOEFF_NORMED)[0][0]
     wynik_his = 1 - prawdopo_zgodnosci
     wynik_his_10 = (porownaj / 10) + wynik_his  # wykorzystanie 10% z porówania his, ponieważ jest mniej dokładne od metody "wzornikowej"
@@ -168,11 +168,28 @@ def porow_histogram(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
     # print("to czego szuka" )
     # print(1-wynik_his_10)
     return 1 - wynik_his_10
-#porownaj wymiary
+
 #tutaj dodaj
 # def porownaj_wymiary(bb_zdj_1:BBox, bb_zdj_2:BBox):
 #     zdj_1 = bb_zdj_1.img
 #     zdj_2 = bb_zdj_2.img
+
+def porow_wymiary(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
+    #Wysokość 1 i 2 bb
+    H_bb_1 = photos[zdj_1].wysokosc_class[bb_zdj_1]
+    H_bb_2 = photos[zdj_2].wysokosc_class[bb_zdj_2]
+
+    #Szerokość 1 i 2 bb
+    W_bb_1 = photos[zdj_1].szerokosc_class[bb_zdj_1]
+    W_bb_2 = photos[zdj_2].szerokosc_class[bb_zdj_2]
+
+    #Przekątna 1 i 2 bb
+    D_bb_1 = photos[zdj_1].przekatna_class[bb_zdj_1]
+    D_bb_2 = photos[zdj_2].przekatna_class[bb_zdj_2]
+
+
+
+
 
 
 # def prawdopodienstwo():
