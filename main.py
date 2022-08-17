@@ -169,10 +169,6 @@ def porow_histogram(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
     # print(1-wynik_his_10)
     return 1 - wynik_his_10
 
-#tutaj dodaj
-# def porownaj_wymiary(bb_zdj_1:BBox, bb_zdj_2:BBox):
-#     zdj_1 = bb_zdj_1.img
-#     zdj_2 = bb_zdj_2.img
 
 def porow_wymiary(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
     #Wysokość 1 i 2 bb
@@ -187,9 +183,23 @@ def porow_wymiary(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
     D_bb_1 = photos[zdj_1].przekatna_class[bb_zdj_1]
     D_bb_2 = photos[zdj_2].przekatna_class[bb_zdj_2]
 
+    # stosunki wysokość, przekątnych i szerokości, w celu uzyskania liczb mniejszych niż 1 dodany jest warunek
+    if H_bb_1 > H_bb_2:
+        stosunek_H = H_bb_2/H_bb_1
+    else:
+        stosunek_H = H_bb_1 / H_bb_2
 
+    if W_bb_1 > W_bb_2:
+        stosunek_W = W_bb_2/W_bb_1
+    else:
+        stosunek_W = W_bb_1/W_bb_2
 
+    if D_bb_1 > D_bb_2:
+        stosunek_D = D_bb_2/D_bb_1
+    else:
+        stosunek_D = D_bb_1/D_bb_2
 
+    return stosunek_H, stosunek_W, stosunek_D
 
 
 # def prawdopodienstwo():
