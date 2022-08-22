@@ -132,13 +132,20 @@ def read(data_dir):
                     szerokosc.append(w_szerokosc)
                     wysokosc.append(w_wysokos)
 
-                    print(w_przekatna)
-                    print(w_szerokosc)
-                    print(w_wysokos)
+                    w_do_hist_sz = w_szerokosc / 3
+                    w_do_hist_wys = w_wysokos / 3
+
+                    wycinek_do_hit = img[int(y + w_do_hist_wys):int(y + h - w_do_hist_wys),
+                                     int(x + w_do_hist_sz):int(x + w - w_do_hist_sz)]
+                    # print(w_przekatna)
+                    # print(w_szerokosc)
+                    # print(w_wysokos)
+                    cv2.imshow("bbbb", wycinek_do_hit)
+                    cv2.waitKey()
 
                     # #histogram do wycinku
-                    # histg = cv2.calcHist([wycinek], [0], None, [256], [0, 256])
-                    # histogramy.append(histg)
+                    histg = cv2.calcHist([wycinek], [0], None, [256], [0, 256])
+                    histogramy.append(histg)
 
                     # plt.plot(histg)
                     # plt.xlim([0, 256])
