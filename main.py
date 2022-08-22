@@ -6,6 +6,8 @@ import numpy as np
 import cv2
 import math
 from pgmpy.models import FactorGraph
+from pgmpy.factors.discrete import DiscreteFactor
+from pgmpy.inference import BeliefPropagation
 from matplotlib import pyplot as plt
 
 #Pamietaj: dodaj linijki w ktorych to jest
@@ -22,6 +24,7 @@ class BBox:
         self.nazwa = nazwa                              #nazwa zdjecia
         self.liczba_BB = liczba_BB                      #liczba bb na jednym zdjęciu
 
+#źródło: https://www.geeksforgeeks.org/combinations-in-python-without-using-itertools/
 def preparation(search, r):
     name = search
     length = len(name)
@@ -33,13 +36,13 @@ def preparation(search, r):
         for i in reversed(range(r)):
             if id[i] != i + length - r:
                 break
-            else:
-                return
+        else:
+            return
 
-            id[i] +=1
-            for ii in range(i+1, r):
-                id[ii] = id[ii-1]+1
-            yield tuple(name[i] for i in id)
+        id[i] +=1
+        for ii in range(i+1, r):
+            id[ii] = id[ii-1]+1
+        yield tuple(name[i] for i in id)
 
 def read(data_dir):
     plik = str(data_dir) + '/bboxes.txt'
@@ -83,7 +86,7 @@ def read(data_dir):
                 przekatna.clear()
                 histogramy.clear()
                 # odleglosci.clear()
-                print("weszlo")
+                # print("weszlo")
         else:
             if len(line)<3 and line != '\n':
                 ilosc = int(line) #ile mamy wczytac kolejnych lini
@@ -109,10 +112,10 @@ def read(data_dir):
                     #wpisanie wyciętego BB do klasy
                     boxy.append(wycinek)
 
-                    cv2.imshow("wycinek", wycinek)
-                    cv2.waitKey()
-                    print("weszlo")
-                    print(ilosc)
+                    # cv2.imshow("wycinek", wycinek)
+                    # cv2.waitKey()
+                    # print("weszlo")
+                    # print(ilosc)
                     """
                     W programie będą użyte takie wartości jak długość, wysokość i przekątna boundingboxa. 
                     W tym celu wykorzystałam taki układ:
@@ -135,20 +138,18 @@ def read(data_dir):
                     w_do_hist_sz = w_szerokosc / 3
                     w_do_hist_wys = w_wysokos / 3
 
-                    wycinek_do_hit = img[int(y + w_do_hist_wys):int(y + h - w_do_hist_wys),
-                                     int(x + w_do_hist_sz):int(x + w - w_do_hist_sz)]
+                    wycinek_do_hit = img[int(y + w_do_hist_wys):int(y + h - w_do_hist_wys), int(x+ w_do_hist_sz):int(x + w - w_do_hist_sz)]
                     # print(w_przekatna)
                     # print(w_szerokosc)
                     # print(w_wysokos)
-                    cv2.imshow("bbbb", wycinek_do_hit)
-                    cv2.waitKey()
-
-                    # #histogram do wycinku
-                    histg = cv2.calcHist([wycinek], [0], None, [256], [0, 256])
+                    # cv2.imshow("bbbb", wycinek_do_hit)
+                    # cv2.waitKey()
+                    #histogram do wycinku
+                    histg = cv2.calcHist([wycinek_do_hit], [0], None, [256], [0, 256])
                     histogramy.append(histg)
 
                     # plt.plot(histg)
-                    # plt.xlim([0, 256])
+                    # # plt.xlim([0, 256])
                     # plt.show()
                     # cv2.waitKey()
 
@@ -156,21 +157,24 @@ def read(data_dir):
 
                     if ilosc == 0:
                         current_photo_flag = True
+                        # print(liczba_bb_zdj)
                         do_klasy = BBox(punkty, boxy, wysokosc, szerokosc, przekatna, histogramy, nazwa_zdj, liczba_bb_zdj)
                         photos.append(do_klasy)
+                        # print(photos[1].histogramy_class[1])
 
 
 #Funkcja porównująca histogramy
 #na podstawie: https://stackoverflow.com/questions/11541154/checking-images-for-similarity-with-opencv
 #
-def porow_histogram(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
-
+def porownaj_his(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
     porownaj = cv2.compareHist(photos[zdj_1].histogramy_class[bb_zdj_1], photos[zdj_2].histogramy_class[bb_zdj_2],
-                                cv2.HISTCMP_BHATTACHARYYA)
-    prawdopo_zgodnosci = cv2.matchTemplate(photos[zdj_1].histogramy_class[bb_zdj_1], photos[zdj_2].histogramy_class[bb_zdj_2],
-                                               cv2.TM_CCOEFF_NORMED)[0][0]
+                               cv2.HISTCMP_BHATTACHARYYA)
+    prawdopo_zgodnosci = \
+    cv2.matchTemplate(photos[zdj_1].histogramy_class[bb_zdj_1], photos[zdj_2].histogramy_class[bb_zdj_2],
+                      cv2.TM_CCOEFF_NORMED)[0][0]
     wynik_his = 1 - prawdopo_zgodnosci
-    wynik_his_10 = (porownaj / 10) + wynik_his  # wykorzystanie 10% z porówania his, ponieważ jest mniej dokładne od metody "wzornikowej"
+    wynik_his_10 = (
+                               porownaj / 10) + wynik_his  # wykorzystanie 10% z porówania his, ponieważ jest mniej dokładne od metody "wzornikowej"
 
     # print("to czego szuka" )
     # print(1-wynik_his_10)
@@ -209,10 +213,10 @@ def porow_wymiary(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
     return stosunek_H, stosunek_W, stosunek_D
 
 
-def prawdopodienstwo():
-    flaga = False
+
+#Funkcja wypisująca -1 dla pierwszego zdjęcia
+def prawdopodobienstwo_dla_1_bb():
     linia_pierwsza = None
-    
     # Wypisanie -1 dla liczby bb na 1 zdj
     for lic_bb in range(photos[0].liczba_BB):
         if not linia_pierwsza:
@@ -220,34 +224,95 @@ def prawdopodienstwo():
         else:
             linia_pierwsza = '-1'
     print(linia_pierwsza)
-#
-#     #pętla do przejścia przez wszytkie zdjęcia wraz z ich nr id zdjecia
-#     for bb in enumerate(photos[1:]):
-#         Graf = FactorGraph()
-#         for box in range(bb.liczba_BB):
-#             nazwa_zdj = bb.nazwa + '_' + str(box)
-#
-#             #pętla po bb z poprzedniego zjęcia
-#             for bb_minus_1 in range(photos[bb].liczba_BB):
-#                 prawdop_po_his = porow_histogram(bb_minus_1, box)
+
+#Graf cały powstał na podstawie dokumentacji: https://pgmpy.org/models/factorgraph.html
+def prawdopodienstwo():
+    wynik = []
+    flaga = False
 
 
+    #pętla do przejścia przez wszytkie zdjęcia wraz z ich nr id zdjecia
+    for x, bb in enumerate(photos[1:]):
+        # print(x)
 
+        Graf = FactorGraph()
+        # print(bb.liczba_BB)
+        # print(range(bb.liczba_BB))
+        for box in range(bb.liczba_BB):
+            # print("x", x)
+            # print("bb", bb)
+            # print("box", box)
 
+            nazwa_zdj = bb.nazwa + '_' + str(box)
+            Graf.add_node(nazwa_zdj) # dodanie nowego "węzła" oraz aktualizacja
+            #pętla po bb z poprzedniego zjęcia
+            for bb_minus_1 in range(photos[x].liczba_BB):
+                # print(x, bb_minus_1, x+1, box)
+                #użycie funkcji do porównania histogramói i wymiarów
+                prawdop_po_his = porownaj_his(x, bb_minus_1, x+1, box)
+                p_h, p_w, p_p = porow_wymiary(x, bb_minus_1, x+1, box)
+                #dodanie współczynników z takimi samymi wagami
+                suma_prawd = (prawdop_po_his + p_h + p_p + p_w) / 4
+                wynik.append(suma_prawd)
+                # print(w)
+                # print("weszloooo")
 
+            x1 = DiscreteFactor([nazwa_zdj], [len(wynik)+1], [[0.5]+wynik])
+            Graf.add_factors(x1)
+            Graf.add_node(x1)
+            Graf.add_edge(nazwa_zdj, x1)
+            wynik.clear()
+            # print("weszpoweszlo")
+            if bb.liczba_BB >1:
+                flaga = True
+                # print("wesz")
 
+        if flaga:
+            # print("weszlo")
+            zmienna = []
+            y1 = np.ones((photos[x].liczba_BB+1, photos[x].liczba_BB+1 ))
+            y2 = np.eye(photos[x].liczba_BB+1) # tworzy macierz kwadratową
+            # print("jestem tu")
+            w = y1 - y2
+            w[0][0] += 1
 
+            # print("print1", bb.liczba_BB)
+            # print(range(bb.liczba_BB))
+            for j in range(bb.liczba_BB):
+                # print("tutututututu")
+                # print("print2", bb.liczba_BB)
+                nazwa_zdj = bb.nazwa + '_' + str(j)
+                zmienna.append(nazwa_zdj)
+            zmienna_1 = [x for x in preparation(zmienna, 2)]
+            # print("cccccccc", zmienna_1)
+            for j in range(len(zmienna_1)):
 
+                x2 = DiscreteFactor([zmienna_1[j][0], zmienna_1[j][1]], [photos[x].liczba_BB + 1, photos[x].liczba_BB + 1], w)
+                # print("weszło2")
+                # print("print", x2)
+                cv2.waitKey()
+                Graf.add_factors(x2)
+                Graf.add_node(x2)
+                Graf.add_edges_from([(zmienna_1[j][0], x2), (zmienna_1[j][1], x2)])
+            flaga = False
+        # print(Graf)
 
+        result = None
+        belief_propagation= BeliefPropagation(Graf)
+        belief_propagation.calibrate()
 
-
-
-
-
-
-
-
-
+        map = belief_propagation.map_query(Graf.get_variable_nodes(), show_progress=False)
+        # print("map", map)
+        for i in range(bb.liczba_BB):  # zapisanie przypisanych bb do zmiennej, aby potem wyświetlić je w jednej linii
+            nazwa_zdj = bb.nazwa + '_' + str(i)
+            Liczby_z_map = map[nazwa_zdj] - 1
+            # print(Liczby_z_map)
+            if not result:
+                # print(Liczby_z_map)
+                result = str(Liczby_z_map)
+            else:
+                result = result + ' ' + str(Liczby_z_map)
+        print(result)
 
 
 if __name__ == '__main__':
@@ -257,6 +322,8 @@ if __name__ == '__main__':
     images_dir = Path(args.images_dir)
 
     read(images_dir)
+    prawdopodobienstwo_dla_1_bb()
+    prawdopodienstwo()
 
 
 
