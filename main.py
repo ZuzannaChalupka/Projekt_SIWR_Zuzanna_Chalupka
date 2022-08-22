@@ -25,6 +25,7 @@ class BBox:
         self.liczba_BB = liczba_BB                      #liczba bb na jednym zdjęciu
 
 #źródło: https://www.geeksforgeeks.org/combinations-in-python-without-using-itertools/
+#poniższa funkcja jest cała zabrana z punktu Python3 z linku
 def preparation(search, r):
     name = search
     length = len(name)
@@ -126,7 +127,8 @@ def read(data_dir):
                     Powyższy prostokąt jest przykładem jak reprezentowane są współrzędne do obliczenia długości Euklidesowej.
 
                     """
-                    w_przekatna = math.sqrt(pow((x - x - w), 2) + pow((y - h - y),2))  # odległość euklidesowa, odejmowanie x od x specjalnie, nie zostało zoptymalizowane, żeby było jak powstał wzór
+                    #oliczanie szerokości, wysokości i przekątnej bb
+                    w_przekatna = math.sqrt(pow((x - x - w), 2) + pow((y - h - y),2))  # odległość euklidesowa, odejmowanie x od x specjalnie, nie zostało zoptymalizowane, żeby było widać jak powstał wzór
                     w_szerokosc = math.sqrt(pow((x - x - w), 2))
                     w_wysokos = math.sqrt(pow((y - h - y), 2))
 
@@ -135,16 +137,19 @@ def read(data_dir):
                     szerokosc.append(w_szerokosc)
                     wysokosc.append(w_wysokos)
 
+                    #Obliczenie 1/3 wysokości i szerokości
                     w_do_hist_sz = w_szerokosc / 3
                     w_do_hist_wys = w_wysokos / 3
 
+                    #Pomnijeszenie wycinków z każdej strony o 1/3, w celu usięcia tła z histogramó
                     wycinek_do_hit = img[int(y + w_do_hist_wys):int(y + h - w_do_hist_wys), int(x+ w_do_hist_sz):int(x + w - w_do_hist_sz)]
                     # print(w_przekatna)
                     # print(w_szerokosc)
                     # print(w_wysokos)
                     # cv2.imshow("bbbb", wycinek_do_hit)
                     # cv2.waitKey()
-                    #histogram do wycinku
+
+                    #histogram do wycinku mniejszego
                     histg = cv2.calcHist([wycinek_do_hit], [0], None, [256], [0, 256])
                     histogramy.append(histg)
 
@@ -157,15 +162,14 @@ def read(data_dir):
 
                     if ilosc == 0:
                         current_photo_flag = True
-                        # print(liczba_bb_zdj)
+                        # wpisanie parametrów do klasy
                         do_klasy = BBox(punkty, boxy, wysokosc, szerokosc, przekatna, histogramy, nazwa_zdj, liczba_bb_zdj)
                         photos.append(do_klasy)
-                        # print(photos[1].histogramy_class[1])
+
 
 
 #Funkcja porównująca histogramy
 #na podstawie: https://stackoverflow.com/questions/11541154/checking-images-for-similarity-with-opencv
-#
 def porownaj_his(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
     porownaj = cv2.compareHist(photos[zdj_1].histogramy_class[bb_zdj_1], photos[zdj_2].histogramy_class[bb_zdj_2],
                                cv2.HISTCMP_BHATTACHARYYA)
@@ -173,11 +177,8 @@ def porownaj_his(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
     cv2.matchTemplate(photos[zdj_1].histogramy_class[bb_zdj_1], photos[zdj_2].histogramy_class[bb_zdj_2],
                       cv2.TM_CCOEFF_NORMED)[0][0]
     wynik_his = 1 - prawdopo_zgodnosci
-    wynik_his_10 = (
-                               porownaj / 10) + wynik_his  # wykorzystanie 10% z porówania his, ponieważ jest mniej dokładne od metody "wzornikowej"
+    wynik_his_10 = (porownaj / 3) + wynik_his  # wykorzystanie 33% z porówania his, ponieważ jest mniej dokładne od metody "wzornikowej"
 
-    # print("to czego szuka" )
-    # print(1-wynik_his_10)
     return 1 - wynik_his_10
 
 
@@ -225,37 +226,28 @@ def prawdopodobienstwo_dla_1_bb():
             linia_pierwsza = '-1'
     print(linia_pierwsza)
 
-#Graf cały powstał na podstawie dokumentacji: https://pgmpy.org/models/factorgraph.html
+#Graf cały powstał na podstawie dokumentacji do biblioteki: https://pgmpy.org/models/factorgraph.html
 def prawdopodienstwo():
     wynik = []
     flaga = False
 
 
-    #pętla do przejścia przez wszytkie zdjęcia wraz z ich nr id zdjecia
+    #pętla do przejścia przez wszytkie zdjęcia, oprócz 1 wraz z ich nr id zdjecia
     for x, bb in enumerate(photos[1:]):
-        # print(x)
 
         Graf = FactorGraph()
-        # print(bb.liczba_BB)
-        # print(range(bb.liczba_BB))
-        for box in range(bb.liczba_BB):
-            # print("x", x)
-            # print("bb", bb)
-            # print("box", box)
 
+        for box in range(bb.liczba_BB):
             nazwa_zdj = bb.nazwa + '_' + str(box)
             Graf.add_node(nazwa_zdj) # dodanie nowego "węzła" oraz aktualizacja
-            #pętla po bb z poprzedniego zjęcia
+            #pętla po bb z poprzedniego zdjęcia
             for bb_minus_1 in range(photos[x].liczba_BB):
-                # print(x, bb_minus_1, x+1, box)
                 #użycie funkcji do porównania histogramói i wymiarów
                 prawdop_po_his = porownaj_his(x, bb_minus_1, x+1, box)
                 p_h, p_w, p_p = porow_wymiary(x, bb_minus_1, x+1, box)
-                #dodanie współczynników z takimi samymi wagami
-                suma_prawd = (prawdop_po_his + p_h + p_p + p_w) / 4
+                #dodanie współczynników z większa wagą dla wysokości i długości
+                suma_prawd = (prawdop_po_his + 2 *p_h + p_p + 2 *p_w) / 6
                 wynik.append(suma_prawd)
-                # print(w)
-                # print("weszloooo")
 
             x1 = DiscreteFactor([nazwa_zdj], [len(wynik)+1], [[0.5]+wynik])
             Graf.add_factors(x1)
@@ -271,7 +263,7 @@ def prawdopodienstwo():
             # print("weszlo")
             zmienna = []
             y1 = np.ones((photos[x].liczba_BB+1, photos[x].liczba_BB+1 ))
-            y2 = np.eye(photos[x].liczba_BB+1) # tworzy macierz kwadratową
+            y2 = np.eye(photos[x].liczba_BB+1)
             # print("jestem tu")
             w = y1 - y2
             w[0][0] += 1
