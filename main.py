@@ -209,8 +209,17 @@ def porow_wymiary(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
     return stosunek_H, stosunek_W, stosunek_D
 
 
-# def prawdopodienstwo():
-#     flaga = True
+def prawdopodienstwo():
+    flaga = False
+    linia_pierwsza = None
+    
+    # Wypisanie -1 dla liczby bb na 1 zdj
+    for lic_bb in range(photos[0].liczba_BB):
+        if not linia_pierwsza:
+            linia_pierwsza = '-1'
+        else:
+            linia_pierwsza = '-1'
+    print(linia_pierwsza)
 #
 #     #pętla do przejścia przez wszytkie zdjęcia wraz z ich nr id zdjecia
 #     for bb in enumerate(photos[1:]):
