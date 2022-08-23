@@ -86,13 +86,12 @@ def read(data_dir):
                 szerokosc.clear()
                 przekatna.clear()
                 histogramy.clear()
-                # odleglosci.clear()
-                # print("weszlo")
+
         else:
             if len(line)<3 and line != '\n':
                 ilosc = int(line) #ile mamy wczytac kolejnych lini
                 liczba_bb_zdj = ilosc
-                # print("weszlo2")
+
             else:
                 if ilosc !=0:
                     dane = line.split()
@@ -113,10 +112,6 @@ def read(data_dir):
                     #wpisanie wyciętego BB do klasy
                     boxy.append(wycinek)
 
-                    # cv2.imshow("wycinek", wycinek)
-                    # cv2.waitKey()
-                    # print("weszlo")
-                    # print(ilosc)
                     """
                     W programie będą użyte takie wartości jak długość, wysokość i przekątna boundingboxa. 
                     W tym celu wykorzystałam taki układ:
@@ -127,7 +122,7 @@ def read(data_dir):
                     Powyższy prostokąt jest przykładem jak reprezentowane są współrzędne do obliczenia długości Euklidesowej.
 
                     """
-                    #oliczanie szerokości, wysokości i przekątnej bb
+                    #obliczanie szerokości, wysokości i przekątnej bb
                     w_przekatna = math.sqrt(pow((x - x - w), 2) + pow((y - h - y),2))  # odległość euklidesowa, odejmowanie x od x specjalnie, nie zostało zoptymalizowane, żeby było widać jak powstał wzór
                     w_szerokosc = math.sqrt(pow((x - x - w), 2))
                     w_wysokos = math.sqrt(pow((y - h - y), 2))
@@ -143,22 +138,10 @@ def read(data_dir):
 
                     #Pomnijeszenie wycinków z każdej strony o 1/3, w celu usięcia tła z histogramó
                     wycinek_do_hit = img[int(y + w_do_hist_wys):int(y + h - w_do_hist_wys), int(x+ w_do_hist_sz):int(x + w - w_do_hist_sz)]
-                    # print(w_przekatna)
-                    # print(w_szerokosc)
-                    # print(w_wysokos)
-                    # cv2.imshow("bbbb", wycinek_do_hit)
-                    # cv2.waitKey()
 
                     #histogram do wycinku mniejszego
                     histg = cv2.calcHist([wycinek_do_hit], [0], None, [256], [0, 256])
                     histogramy.append(histg)
-
-                    # plt.plot(histg)
-                    # # plt.xlim([0, 256])
-                    # plt.show()
-                    # cv2.waitKey()
-
-
 
                     if ilosc == 0:
                         current_photo_flag = True
@@ -168,13 +151,12 @@ def read(data_dir):
 
 
 
-#Funkcja porównująca histogramy
+#Funkcja porównująca histogramy pomniejszonych wycinków
 #na podstawie: https://stackoverflow.com/questions/11541154/checking-images-for-similarity-with-opencv
 def porownaj_his(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
     porownaj = cv2.compareHist(photos[zdj_1].histogramy_class[bb_zdj_1], photos[zdj_2].histogramy_class[bb_zdj_2],
                                cv2.HISTCMP_BHATTACHARYYA)
-    prawdopo_zgodnosci = \
-    cv2.matchTemplate(photos[zdj_1].histogramy_class[bb_zdj_1], photos[zdj_2].histogramy_class[bb_zdj_2],
+    prawdopo_zgodnosci = cv2.matchTemplate(photos[zdj_1].histogramy_class[bb_zdj_1], photos[zdj_2].histogramy_class[bb_zdj_2],
                       cv2.TM_CCOEFF_NORMED)[0][0]
     wynik_his = 1 - prawdopo_zgodnosci
     wynik_his_10 = (porownaj / 3) + wynik_his  # wykorzystanie 33% z porówania his, ponieważ jest mniej dokładne od metody "wzornikowej"
@@ -231,12 +213,9 @@ def prawdopodienstwo():
     wynik = []
     flaga = False
 
-
     #pętla do przejścia przez wszytkie zdjęcia, oprócz 1 wraz z ich nr id zdjecia
     for x, bb in enumerate(photos[1:]):
-
         Graf = FactorGraph()
-
         for box in range(bb.liczba_BB):
             nazwa_zdj = bb.nazwa + '_' + str(box)
             Graf.add_node(nazwa_zdj) # dodanie nowego "węzła" oraz aktualizacja
@@ -254,53 +233,41 @@ def prawdopodienstwo():
             Graf.add_node(x1)
             Graf.add_edge(nazwa_zdj, x1)
             wynik.clear()
-            # print("weszpoweszlo")
+
             if bb.liczba_BB >1:
                 flaga = True
-                # print("wesz")
 
         if flaga:
-            # print("weszlo")
+
             zmienna = []
             y1 = np.ones((photos[x].liczba_BB+1, photos[x].liczba_BB+1 ))
             y2 = np.eye(photos[x].liczba_BB+1)
-            # print("jestem tu")
             w = y1 - y2
             w[0][0] += 1
 
-            # print("print1", bb.liczba_BB)
-            # print(range(bb.liczba_BB))
             for j in range(bb.liczba_BB):
-                # print("tutututututu")
-                # print("print2", bb.liczba_BB)
+
                 nazwa_zdj = bb.nazwa + '_' + str(j)
                 zmienna.append(nazwa_zdj)
             zmienna_1 = [x for x in preparation(zmienna, 2)]
-            # print("cccccccc", zmienna_1)
-            for j in range(len(zmienna_1)):
 
+            for j in range(len(zmienna_1)):
                 x2 = DiscreteFactor([zmienna_1[j][0], zmienna_1[j][1]], [photos[x].liczba_BB + 1, photos[x].liczba_BB + 1], w)
-                # print("weszło2")
-                # print("print", x2)
-                cv2.waitKey()
                 Graf.add_factors(x2)
                 Graf.add_node(x2)
                 Graf.add_edges_from([(zmienna_1[j][0], x2), (zmienna_1[j][1], x2)])
             flaga = False
-        # print(Graf)
+
 
         result = None
         belief_propagation= BeliefPropagation(Graf)
         belief_propagation.calibrate()
-
         map = belief_propagation.map_query(Graf.get_variable_nodes(), show_progress=False)
-        # print("map", map)
         for i in range(bb.liczba_BB):  # zapisanie przypisanych bb do zmiennej, aby potem wyświetlić je w jednej linii
             nazwa_zdj = bb.nazwa + '_' + str(i)
             Liczby_z_map = map[nazwa_zdj] - 1
-            # print(Liczby_z_map)
+
             if not result:
-                # print(Liczby_z_map)
                 result = str(Liczby_z_map)
             else:
                 result = result + ' ' + str(Liczby_z_map)
