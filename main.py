@@ -10,6 +10,25 @@ from pgmpy.factors.discrete import DiscreteFactor
 from pgmpy.inference import BeliefPropagation
 from matplotlib import pyplot as plt
 
+# TODO Jakość kodu i raport (2.5/5)
+# TODO Raport nie wyjaśnia jak działa model, co oznaczają zmienne losowe oraz czemu służą poszczególne czynniki.
+# TODO Kod dobrze okomentowany, ale miejscami mało przejrzysty.
+
+# TODO Skuteczność śledzenia 0.649 (3.5/5)
+# TODO [0.00, 0.0] - 0.0
+# TODO (0.0, 0.1) - 0.5
+# TODO [0.1, 0.2) - 1.0
+# TODO [0.2, 0.3) - 1.5
+# TODO [0.3, 0.4) - 2.0
+# TODO [0.4, 0.5) - 2.5
+# TODO [0.5, 0.6) - 3.0
+# TODO [0.6, 0.7) - 3.5
+# TODO [0.7, 0.8) - 4.0
+# TODO [0.8, 0.9) - 4.5
+# TODO [0.9, 1.0) - 5.0
+
+# TODO niepoprawne wyjście: oczekiwana liczba linii = 400, otrzymana liczba linii = 399
+
 #Pamietaj: dodaj linijki w ktorych to jest
 photos = []
 
@@ -51,6 +70,7 @@ def read(data_dir):
         lines = f.readlines()
     zmianna_pomocnicza = None
 
+    # TODO Pętla for tutaj jest niepotrzebna.
     for line in lines:
         zmianna_pomocnicza = line[:1]
         break
@@ -88,6 +108,7 @@ def read(data_dir):
                 histogramy.clear()
 
         else:
+            # TODO Lepiej wykorzystać kolejność danych w pliku, a nie długość linii.
             if len(line)<3 and line != '\n':
                 ilosc = int(line) #ile mamy wczytac kolejnych lini
                 liczba_bb_zdj = ilosc
@@ -201,6 +222,7 @@ def porow_wymiary(zdj_1, bb_zdj_1, zdj_2, bb_zdj_2):
 def prawdopodobienstwo_dla_1_bb():
     linia_pierwsza = None
     # Wypisanie -1 dla liczby bb na 1 zdj
+    # TODO A co jeśli będzie więcej niż 1 BB na 1. zdjęciu?
     for lic_bb in range(photos[0].liczba_BB):
         if not linia_pierwsza:
             linia_pierwsza = '-1'
@@ -259,6 +281,7 @@ def prawdopodienstwo():
             flaga = False
 
 
+        # TODO W przypadku gdy będzie 0 BB to powinna zostać wypisana pusta linia.
         result = None
         belief_propagation= BeliefPropagation(Graf)
         belief_propagation.calibrate()
